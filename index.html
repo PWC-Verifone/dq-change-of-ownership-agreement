@@ -443,6 +443,15 @@ function toTitleCase(str) {
   });
 }
 
+// Normalize store number to DQ0XXXXX format
+// Strips all non-digits, takes last 5 digits, pads with zeros, prepends DQ0
+function formatStoreNumber(raw) {
+  var digits = raw.replace(/\D/g, '');
+  if (digits.length > 5) digits = digits.slice(-5);
+  while (digits.length < 5) digits = '0' + digits;
+  return 'DQ0' + digits;
+}
+
 function applyTitleCase(el) {
   var s = el.selectionStart;
   var e = el.selectionEnd;
@@ -593,9 +602,15 @@ function submitForm() {
     ? 'Already completed the Verifone Merchant Agreement.<br/>(Ask i.POINT.Billing if recent forms have been received from ' + g('e-email').toLowerCase() + ')'
     : 'Has NOT completed the Verifone Merchant Agreement.<br/>(Ask i.POINT.Billing if recent forms have been received from ' + g('e-email').toLowerCase() + ')';
 
+  var achTextCustomer = achStatus === 'completed'
+    ? 'Already completed the Verifone Merchant Agreement.'
+    : 'Has NOT completed the Verifone Merchant Agreement.';
+
+  var formattedStore = formatStoreNumber(g('e-store'));
+
   var payload = {
-    storeNumber: g('e-store'),
-    storeDigits: g('e-store').replace(/\D/g, ''),
+    storeNumber: formattedStore,
+    storeDigits: formattedStore.replace(/\D/g, ''),
     effectiveDate: formattedDate,
     address: toTitleCase(g('e-addr')),
     city: toTitleCase(getCityValue()),
@@ -616,7 +631,8 @@ function submitForm() {
     serialNumbers: serials.replace(/\n/g, '<br/>'),
     weekdayOpening: wkdayVal,
     timezone: g('e-tz') || 'Not specified',
-    achStatus: achText
+    achStatus: achText,
+    achStatusCustomer: achTextCustomer
   };
 
   var submitBtn = document.querySelector('.submit-btn');
@@ -630,7 +646,7 @@ function submitForm() {
   })
   .then(function(response) {
     if (response.ok || response.status === 202) {
-      showConfirmation(payload, serials, tidVals);
+      showConfirmation(payload, serials, tidVals, achTextCustomer);
     } else {
       throw new Error('Server responded with ' + response.status);
     }
@@ -642,11 +658,11 @@ function submitForm() {
   });
 }
 
-function showConfirmation(p, serials, tidVals) {
+function showConfirmation(p, serials, tidVals, achCustomer) {
   var page = document.querySelector('.page');
   var tidsHtml = tidVals.map(function(t, i) { return '<span style="display:inline-block; background:#f0fdf8; border:1px solid #6EFFD3; border-radius:4px; padding:2px 10px; margin:2px 4px 2px 0; font-family:monospace;">' + t + '</span>'; }).join('');
   var serialsList = serials.split('\n').filter(Boolean).map(function(s) { return '<span style="display:inline-block; background:#f0fdf8; border:1px solid #6EFFD3; border-radius:4px; padding:2px 10px; margin:2px 4px 2px 0; font-family:monospace;">' + s + '</span>'; }).join('');
-  var achClean = p.achStatus.replace(/<br\/>/g, '\n');
+  var achClean = achCustomer;
 
   page.innerHTML = '<div class="header" style="text-align:center; padding:2rem;">' +
     '<div style="font-size:48px; margin-bottom:8px;">&#10003;</div>' +
