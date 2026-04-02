@@ -115,7 +115,7 @@
         <div class="field full"><label>New legal entity / business name</label><input id="e-entity" type="text" placeholder="e.g. Company name"/></div>
         <div class="field"><label>Contact name</label><input id="e-contact" type="text" placeholder="e.g. John Doe"/></div>
         <div class="field"><label>Phone number</label><div class="phone-wrap"><input id="e-phone" type="tel" placeholder="555-555-5555" maxlength="12" oninput="formatPhone(this); checkPhoneDigits(this);"/><span class="phone-star" id="phone-star">*</span></div></div>
-        <div class="field full"><label>Email address</label><div class="email-wrap"><input id="e-email" type="email" placeholder="name@example.com" oninput="checkEmail(this)"/><span class="email-star" id="email-star">*</span></div></div>
+        <div class="field full"><label>Email address</label><div class="email-wrap"><input id="e-email" type="email" placeholder="name@example.com" oninput="checkEmail(this)"/><span class="email-star" id="email-star">*</span></div><span id="email-confirm-hint" style="display:none; font-size:11px; color:#0F6E56; margin-top:4px;"><span style="margin-right:4px;">&#9993;</span>Please double-check this address. A copy of your submission will be sent here for your reference.</span></div>
       </div>
     </div>
 
@@ -305,8 +305,11 @@ function formatPhone(el) {
 function checkEmail(el) {
   var val = el.value.trim();
   var star = document.getElementById('email-star');
+  var hint = document.getElementById('email-confirm-hint');
   var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  if (val.length > 0 && !valid) { star.style.display = 'block'; } else { star.style.display = 'none'; }
+  if (val.length > 0 && !valid) { star.style.display = 'block'; hint.style.display = 'none'; }
+  else if (val.length > 0 && valid) { star.style.display = 'none'; hint.style.display = 'block'; }
+  else { star.style.display = 'none'; hint.style.display = 'none'; }
 }
 
 function checkPhoneDigits(el) {
